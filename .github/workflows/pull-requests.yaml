@@ -1,7 +1,7 @@
 name: Build project and run unit tests
 
 on:
-  pull_requests:
+  pull_request:
     branches:
       - master
 
