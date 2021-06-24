@@ -15,43 +15,51 @@
 package processors
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/openfaas-incubator/connector-sdk/types"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/openfaas/connector-sdk/types"
 )
 
 // ResponseProcessor processes responses to functions invocations made while processing messages off of an AWS SQS queue.
 type ResponseProcessor struct {
-	client   *sqs.SQS
+	client   *sqs.Client
 	queueURL string
 }
 
 // NewResponseProcessor creates a new instance of ResponseProcessor.
-func NewResponseProcessor(awsSQSClient *sqs.SQS, awsSQSQueueURL string) *ResponseProcessor {
+func NewResponseProcessor(sqsClient *sqs.Client, sqsQueueURL string) *ResponseProcessor {
 	return &ResponseProcessor{
-		client:   awsSQSClient,
-		queueURL: awsSQSQueueURL,
+		client:   sqsClient,
+		queueURL: sqsQueueURL,
 	}
 }
 
-// Response is invoked whenever a response to a given function invocation is received.
+// Response is invoked whenever a response to a given function invocation is
+// received.
 func (r *ResponseProcessor) Response(res types.InvokerResponse) {
 	// Handle processing of the response in a separate goroutine.
-	// https://github.com/openfaas-incubator/connector-sdk/blob/0.4.2/types/response_subscriber.go#L5-L7
+	// https://github.com/openfaas/connector-sdk/blob/0.4.2/types/response_subscriber.go#L5-L7
 	go func() {
 		logger, _, receiptHandle := unpackMessageContext(res.Context)
 
 		if res.Error != nil || res.Status >= http.StatusMultipleChoices {
 			// Log the error.
-			logger.Warnf("Failed to process message: %v", res.Error)
-			// Change the message's visibility so it can be picked up immediately by another consumer.
-			_, err := r.client.ChangeMessageVisibility(&sqs.ChangeMessageVisibilityInput{
-				QueueUrl:          aws.String(r.queueURL),
-				ReceiptHandle:     aws.String(receiptHandle),
-				VisibilityTimeout: aws.Int64(0),
-			})
+			logger.Errorf("Failed to process message: %v", res.Error)
+
+			// Change the message's visibility so it can be picked up
+			// immediately by another consumer.
+			_, err := r.client.ChangeMessageVisibility(
+				context.TODO(),
+				&sqs.ChangeMessageVisibilityInput{
+					QueueUrl:          aws.String(r.queueURL),
+					ReceiptHandle:     aws.String(receiptHandle),
+					VisibilityTimeout: 0,
+				},
+			)
+
 			if err != nil {
 				logger.Errorf("Failed to change message visibility: %v", err)
 			} else {
@@ -60,11 +68,16 @@ func (r *ResponseProcessor) Response(res types.InvokerResponse) {
 		} else {
 			// Log the fact that the message was successfully processed.
 			logger.Trace("Message successfully processed")
+
 			// Delete the message from the queue.
-			_, err := r.client.DeleteMessage(&sqs.DeleteMessageInput{
-				QueueUrl:      aws.String(r.queueURL),
-				ReceiptHandle: aws.String(receiptHandle),
-			})
+			_, err := r.client.DeleteMessage(
+				context.TODO(),
+				&sqs.DeleteMessageInput{
+					QueueUrl:      aws.String(r.queueURL),
+					ReceiptHandle: aws.String(receiptHandle),
+				},
+			)
+
 			if err != nil {
 				logger.Errorf("Failed to delete message: %v", err)
 			} else {

@@ -15,14 +15,16 @@
 package processors
 
 import (
+	"context"
 	"sync"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/openfaas-incubator/connector-sdk/types"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	sqsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"github.com/openfaas/connector-sdk/types"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/form3tech-oss/openfaas-sqs-connector/internal/pointers"
+	"github.com/Altitude-sports/openfaas-sqs-connector/internal/pointers"
 )
 
 const (
@@ -32,52 +34,64 @@ const (
 
 // MessageProcessor reads and processes messages off of an AWS SQS queue.
 type MessageProcessor struct {
-	client                   *sqs.SQS
+	client                   *sqs.Client
 	controller               types.Controller
-	maxNumberOfMessages      int64
-	maxWaitTimeSeconds       int64
+	maxNumberOfMessages      int32
+	maxWaitTimeSeconds       int32
 	queueURL                 string
-	visibilityTimeoutSeconds int64
+	visibilityTimeoutSeconds int32
 }
 
 // NewMessageProcessor creates a new instance of MessageProcessor.
-func NewMessageProcessor(awsSQSClient *sqs.SQS, awsSQSQueueURL string, awsSQSQueueMaxNumberOfMessages int64, awsSQSQueueMaxWaitTimeSeconds int64, awsSQSQueueVisibilityTimeoutSeconds int64, controller types.Controller) *MessageProcessor {
+func NewMessageProcessor(
+	sqsClient *sqs.Client,
+	sqsQueueURL string,
+	sqsQueueMaxNumberOfMessages int32,
+	sqsQueueMaxWaitTimeSeconds int32,
+	sqsQueueVisibilityTimeoutSeconds int32,
+	controller types.Controller,
+) *MessageProcessor {
 	return &MessageProcessor{
-		client:                   awsSQSClient,
+		client:                   sqsClient,
 		controller:               controller,
-		maxNumberOfMessages:      awsSQSQueueMaxNumberOfMessages,
-		maxWaitTimeSeconds:       awsSQSQueueMaxWaitTimeSeconds,
-		queueURL:                 awsSQSQueueURL,
-		visibilityTimeoutSeconds: awsSQSQueueVisibilityTimeoutSeconds,
+		maxNumberOfMessages:      sqsQueueMaxNumberOfMessages,
+		maxWaitTimeSeconds:       sqsQueueMaxWaitTimeSeconds,
+		queueURL:                 sqsQueueURL,
+		visibilityTimeoutSeconds: sqsQueueVisibilityTimeoutSeconds,
 	}
 }
 
 // Run sits on a loop reading and processing messages off of the AWS SQS queue.
 func (p *MessageProcessor) Run() {
 	for {
-		r, err := p.client.ReceiveMessage(&sqs.ReceiveMessageInput{
-			MaxNumberOfMessages: aws.Int64(p.maxNumberOfMessages),
-			MessageAttributeNames: []*string{
-				aws.String(messageAttributeNameAll),
+		r, err := p.client.ReceiveMessage(
+			context.TODO(),
+			&sqs.ReceiveMessageInput{
+				MaxNumberOfMessages: p.maxNumberOfMessages,
+				MessageAttributeNames: []string{
+					messageAttributeNameAll,
+				},
+				QueueUrl:          aws.String(p.queueURL),
+				VisibilityTimeout: p.visibilityTimeoutSeconds,
+				WaitTimeSeconds:   p.maxWaitTimeSeconds,
 			},
-			QueueUrl:          aws.String(p.queueURL),
-			VisibilityTimeout: aws.Int64(p.visibilityTimeoutSeconds),
-			WaitTimeSeconds:   aws.Int64(p.maxWaitTimeSeconds),
-		})
+		)
+
 		if err != nil {
 			log.Errorf("Failed to receive message: %v", err)
 			continue
 		}
-		if len(r.Messages) < 1 {
+
+		if len(r.Messages) <= 0 {
 			continue
 		}
 
 		var wg sync.WaitGroup
 		wg.Add(len(r.Messages))
 		for _, message := range r.Messages {
-			go func(message *sqs.Message) {
+			go func(message *sqsTypes.Message) {
 				defer wg.Done()
-				log.Tracef("Processing message with id %q", *message.MessageId)
+				log.Tracef("Processing message with ID %q", *message.MessageId)
 
 				var (
 					body  string
@@ -92,15 +106,20 @@ func (p *MessageProcessor) Run() {
 				}
 
 				// Retrieve the message's topic (if any).
-				if v, ok := message.MessageAttributes[messageAttributeNameTopic]; !ok || v == nil || *v.StringValue == "" {
+				if v, ok := message.MessageAttributes[messageAttributeNameTopic]; !ok || *v.StringValue == "" {
 					topic = p.queueURL
 				} else {
 					topic = *v.StringValue
 				}
 
 				// Invoke the function(s) associated with the topic.
-				p.controller.InvokeWithContext(buildMessageContext(message), topic, pointers.NewBytes([]byte(body)))
-			}(message)
+				log.Tracef("Invoking on topic %q passing message with ID %q", topic, *message.MessageId)
+				p.controller.InvokeWithContext(
+					buildMessageContext(message),
+					topic,
+					pointers.NewBytes([]byte(body)),
+				)
+			}(&message)
 		}
 		wg.Wait()
 	}

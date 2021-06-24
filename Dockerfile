@@ -1,15 +1,56 @@
-FROM golang:1.13.1-buster AS builder
-ENV GO111MODULE on
-WORKDIR /go/src/github.com/form3tech-oss/openfaas-sqs-connector
-COPY go.mod go.sum ./
-RUN go mod vendor
-COPY cmd/ ./cmd/
-COPY internal/ ./internal/
-RUN go build -o /openfaas-sqs-connector -v ./cmd/main.go
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.16-alpine3.13 as builder
 
-FROM gcr.io/distroless/base
-USER nobody:nobody
-WORKDIR /
-COPY --from=builder /openfaas-sqs-connector /openfaas-sqs-connector
-ENTRYPOINT ["/openfaas-sqs-connector"]
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
+
+ARG MIN_COVERAGE_LEVEL=100
+
+# Required to build the project
+RUN apk update && \
+    apk add \
+        findutils \
+        gcc \
+        git \
+        make \
+        musl-dev
+
+# Allows you to add additional packages via build-arg
+ARG ADDITIONAL_PACKAGE
+ARG GOPROXY=""
+ARG GOFLAGS=""
+
+ENV GOOS=${TARGETOS}
+ENV GOARCH=${TARGETARCH}
+ENV GO111MODULE="on"
+ENV CGO_ENABLED=1
+
+WORKDIR /src
+COPY . .
+
+RUN make bins
+RUN make test | tee test_report.log
+RUN grep 'coverage:' test_report.log | \
+    sed -r 's/.*?coverage: ([0-9]+\.[0-9]+%) .*/\1/' | \
+    awk -f coverage_check.awk -v min_cov_level=${MIN_COVERAGE_LEVEL}
+RUN make fmtcheck && \
+    make staticcheck && \
+    make errcheck
+
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.13
+RUN apk --no-cache add ca-certificates && \
+    addgroup -S app && \
+    adduser -S -g app app && \
+    mkdir -p /home/app && \
+    chown app /home/app
+
+WORKDIR /home/app
+
+COPY --from=builder /src/bin/cmd openfaas-sqs-connector
+RUN chown -R app /home/app
+
+USER app
+
+ENTRYPOINT ["./openfaas-sqs-connector"]
 CMD ["--help"]
