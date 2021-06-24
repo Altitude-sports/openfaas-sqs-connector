@@ -17,7 +17,7 @@ package processors
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go/service/sqs"
+	sqsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -29,7 +29,7 @@ const (
 	messageReceiptHandleContextKey
 )
 
-func buildMessageContext(m *sqs.Message) context.Context {
+func buildMessageContext(m *sqsTypes.Message) context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, loggerContextKey, log.WithField("message_id", *m.MessageId))
 	ctx = context.WithValue(ctx, messageIDContextKey, *m.MessageId)
@@ -37,6 +37,13 @@ func buildMessageContext(m *sqs.Message) context.Context {
 	return ctx
 }
 
-func unpackMessageContext(ctx context.Context) (*log.Entry, string, string) {
-	return ctx.Value(loggerContextKey).(*log.Entry), ctx.Value(messageIDContextKey).(string), ctx.Value(messageReceiptHandleContextKey).(string)
+func unpackMessageContext(ctx context.Context) (
+	logEntry *log.Entry,
+	messageID string,
+	messageReceiptHandle string,
+) {
+	logEntry = ctx.Value(loggerContextKey).(*log.Entry)
+	messageID = ctx.Value(messageIDContextKey).(string)
+	messageReceiptHandle = ctx.Value(messageReceiptHandleContextKey).(string)
+	return
 }

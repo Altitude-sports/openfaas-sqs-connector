@@ -43,3 +43,31 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{/*
+Queue CLI args
+*/}}
+{{- define "openfaas-sqs-connector.queue-args" -}}
+
+{{- if .url -}}
+{{- else if .name }}
+    {{- if .awsAccountId -}}
+    {{- end -}}
+{{- else -}}
+{{ fail "Please provide either a queue name or URL" . }}
+{{- end -}}
+
+{{- end -}}
+
+{{/*
+Common labels
+*/}}
+{{- define "openfaas-sqs-connector.labels" -}}
+app.kubernetes.io/name: {{ include "openfaas-sqs-connector.name" . }}
+helm.sh/chart: {{ include "openfaas-sqs-connector.chart" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}

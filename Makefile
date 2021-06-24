@@ -1,28 +1,74 @@
-SHELL := /bin/bash
+############################# Main targets #############################
+# Run all checks, build, and test.
+install: clean staticcheck errcheck bins test
+########################################################################
 
-ROOT := $(shell git rev-parse --show-toplevel)
+##### Variables ######
+MAIN_FILES := $(shell find . -name "main.go")
+TEST_TIMEOUT := 20s
+COLOR := "\e[1;36m%s\e[0m\n"
 
-VERSION ?= $(shell git describe --tags --dirty="-dev")
+dir_no_slash = $(patsubst %/,%,$(dir $(1)))
+dirname = $(notdir $(call dir_no_slash,$(1)))
+parentdirname = $(notdir $(call dir_no_slash,$(call dir_no_slash,$(1))))
+define NEWLINE
 
-DOCKER_IMG ?= form3tech/openfaas-sqs-connector
-DOCKER_TAG ?= $(VERSION)
 
-.PHONY: docker.build
-docker.build:
-	docker build -t $(DOCKER_IMG):$(DOCKER_TAG) $(ROOT)
+endef
 
-.PHONY: docker.push
-docker.push: docker.build
-	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
-	docker push $(DOCKER_IMG):$(DOCKER_TAG)
+##### Targets ######
+tidy:
+	@go mod tidy
 
-.PHONY: install-golangci-lint
-install-golangci-lint:
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $$(go env GOPATH)/bin latest
+env-setup:
+	@go env -w GO111MODULE=on
+	@go env -w GOPROXY="https://proxy.golang.org,direct"
 
-.PHONY: install-deps
-install-deps: install-golangci-lint
+update-libs: env-setup
+	@go get -u github.com/aws/aws-sdk-go-v2
+	@go get -u github.com/aws/aws-sdk-go-v2/config
+	@go get -u github.com/aws/aws-sdk-go-v2/service/sqs
+	@go get -u github.com/openfaas/connector-sdk
+	@go get -u github.com/sirupsen/logrus
+	@make tidy
 
-.PHONY: lint
-lint:
-	golangci-lint run ./... --enable-all --disable lll,wsl
+##### Targets ######
+bins: env-setup
+	@printf $(COLOR) "Build binaries..."
+	$(foreach MAIN_FILE,$(MAIN_FILES), \
+		@go build \
+			-o bin/$(call parentdirname,$(MAIN_FILE))/$(call dirname,$(MAIN_FILE)) \
+			$(MAIN_FILE) \
+	$(NEWLINE))
+
+test: env-setup
+	@printf $(COLOR) "Run unit tests..."
+	@rm -f coverage.html
+	@rm -f coverage.log
+	@rm -f test.log
+	@go test \
+		-timeout $(TEST_TIMEOUT) \
+		-race \
+		-coverprofile=coverage.out \
+		./... | \
+	tee -a test.log
+	@go tool cover -html=coverage.out -o coverage.html
+	@! egrep -q "^--- FAIL" test.log
+	@! grep -q "no tests to run" test.log
+
+fmtcheck: tidy
+	@printf $(COLOR) "Run format check..."
+	@gofmt -l $(OWN_FILES) | xargs test -z
+
+staticcheck: env-setup
+	@printf $(COLOR) "Run static check..."
+	@GO111MODULE=off go get -u honnef.co/go/tools/cmd/staticcheck
+	@staticcheck ./...
+
+errcheck: env-setup
+	@printf $(COLOR) "Run error check..."
+	@GO111MODULE=off go get -u github.com/kisielk/errcheck
+	@errcheck ./...
+
+clean:
+	rm -rf bin

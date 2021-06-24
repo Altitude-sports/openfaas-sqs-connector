@@ -15,29 +15,66 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/openfaas-incubator/connector-sdk/types"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/openfaas/connector-sdk/types"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/form3tech-oss/openfaas-sqs-connector/internal/processors"
+	"github.com/Altitude-sports/openfaas-sqs-connector/internal/processors"
 )
 
 func main() {
-	// Parse command-line flags.
-	endpoint := flag.String("endpoint", "", "the aws sqs endpoint url to use")
-	logLevel := flag.String("log-level", "info", "the log level to use")
-	maxNumberOfMessages := flag.Int64("max-number-of-messages", 1, "the maximum number of messages to return from the aws sqs queue per iteration")
-	maxWaitTime := flag.Int64("max-wait-time", 1, "the maximum amount of time (in seconds) to wait for messages to be returned from the aws sqs queue per iteration")
-	openfaasGatewayURL := flag.String("openfaas-gateway-url", "http://gateway.openfaas.svc:8080", "the url at which the openfaas gateway can be reached")
-	queueURL := flag.String("queue-url", "", "the name of the aws sqs queue to pop messages from")
-	region := flag.String("region", "", "the aws region to which the aws sqs queue belongs")
-	topicRefreshInterval := flag.Int64("topic-refresh-interval", 15, "the interval (in seconds) at which to refresh the topic map")
-	visibilityTimeout := flag.Int64("visibility-timeout", 30, "the amount of time (in seconds) during which received messages are unavailable to other consumers")
+	// Parse command-line flags
+	logLevel := flag.String(
+		"log-level",
+		"info",
+		"the log level to use",
+	)
+	maxNumberOfMessages := flag.Int(
+		"max-number-of-messages",
+		1,
+		"the maximum number of messages to return from the aws sqs queue per iteration",
+	)
+	maxWaitTime := flag.Int(
+		"max-wait-time",
+		1,
+		"the maximum amount of time (in seconds) to wait for messages to be returned from the aws sqs queue per iteration",
+	)
+	openfaasGatewayURL := flag.String(
+		"openfaas-gateway-url",
+		"",
+		"the url at which the openfaas gateway can be reached",
+	)
+	queueURL := flag.String(
+		"queue-url",
+		"",
+		"the URL of the AWS SQS queue to pop messages from",
+	)
+	queueName := flag.String(
+		"queue-name",
+		"",
+		"the name of the AWS SQS queue to pop messages from",
+	)
+	awsAccountID := flag.String(
+		"aws-account-id",
+		"",
+		"the AWS account ID that owns the AWS SQS queue to pop messages from",
+	)
+	topicRefreshInterval := flag.Int(
+		"topic-refresh-interval",
+		15,
+		"the interval (in seconds) at which to refresh the topic map",
+	)
+	visibilityTimeout := flag.Int(
+		"visibility-timeout",
+		30,
+		"the amount of time (in seconds) during which received messages are unavailable to other consumers",
+	)
 	flag.Parse()
 
 	// Log at the requested level.
@@ -48,39 +85,62 @@ func main() {
 	}
 
 	// Make sure that all required flags have been provided.
-	if *region == "" {
-		log.Fatal("--region must be provided")
-	}
-	if *queueURL == "" {
-		log.Fatal("--queue-url must be provided")
+	if *queueURL == "" && *queueName == "" {
+		log.Fatal("either --queue-url or --queue-name must be provided")
 	}
 	if *openfaasGatewayURL == "" {
 		log.Fatal("--openfaas-gateway-url must be provided")
 	}
 
+	// Initialize the AWS SQS client.
+	awsConfig, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatalf("could not initialize the AWS SDK: %v\n", err)
+	}
+	sqsClient := sqs.NewFromConfig(awsConfig)
+
+	// Retrieve the AWS SQS queue URL if not explicitly set
+	if *queueURL == "" {
+		opts := &sqs.GetQueueUrlInput{
+			QueueName: aws.String(*queueName),
+		}
+
+		if *awsAccountID != "" {
+			opts.QueueOwnerAWSAccountId = aws.String(*awsAccountID)
+		}
+
+		response, err := sqsClient.GetQueueUrl(context.TODO(), opts)
+		if err != nil {
+			log.Fatalf("could not retrieve the AWS SQS queue URL: %v\n", err)
+		}
+
+		queueURL = response.QueueUrl
+	}
+
 	// Initialize the controller.
-	controller := types.NewController(types.GetCredentials(), &types.ControllerConfig{
-		GatewayURL:        *openfaasGatewayURL,
-		PrintResponse:     log.IsLevelEnabled(log.DebugLevel),
-		PrintResponseBody: log.IsLevelEnabled(log.DebugLevel),
-		RebuildInterval:   time.Duration(*topicRefreshInterval) * time.Second,
-	})
+	controller := types.NewController(
+		types.GetCredentials(),
+		&types.ControllerConfig{
+			GatewayURL:        *openfaasGatewayURL,
+			PrintResponse:     log.IsLevelEnabled(log.DebugLevel),
+			PrintResponseBody: log.IsLevelEnabled(log.DebugLevel),
+			PrintSync:         log.IsLevelEnabled(log.DebugLevel),
+			RebuildInterval:   time.Duration(*topicRefreshInterval) * time.Second,
+		},
+	)
 	controller.BeginMapBuilder()
 
-	// Initialize the AWS SQS client.
-	awsSession, err := session.NewSession(&aws.Config{
-		Endpoint:                      endpoint,
-		CredentialsChainVerboseErrors: aws.Bool(log.IsLevelEnabled(log.DebugLevel)),
-		Region:                        region,
-	})
-	if err != nil {
-		log.Fatalf("Failed to initialize AWS session: %v", err)
-	}
-	awsSQSClient := sqs.New(awsSession)
-
 	// Initialize the response processor.
-	controller.Subscribe(processors.NewResponseProcessor(awsSQSClient, *queueURL))
+	controller.Subscribe(processors.NewResponseProcessor(sqsClient, *queueURL))
 
-	// Initialize the message processor and start processing messages off the AWS SQS queue.
-	processors.NewMessageProcessor(awsSQSClient, *queueURL, *maxNumberOfMessages, *maxWaitTime, *visibilityTimeout, controller).Run()
+	// Initialize the message processor and start processing messages off the
+	// AWS SQS queue.
+	processors.NewMessageProcessor(
+		sqsClient,
+		*queueURL,
+		int32(*maxNumberOfMessages),
+		int32(*maxWaitTime),
+		int32(*visibilityTimeout),
+		controller,
+	).Run()
 }

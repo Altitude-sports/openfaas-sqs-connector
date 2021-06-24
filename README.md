@@ -1,6 +1,6 @@
 # openfaas-sqs-connector
 
-[![Build Status](https://travis-ci.com/form3tech-oss/openfaas-sqs-connector.svg?branch=master)](https://travis-ci.com/form3tech-oss/openfaas-sqs-connector)
+[![Build Status](https://travis-ci.com/Altitude-sports/openfaas-sqs-connector.svg?branch=master)](https://travis-ci.com/Altitude-sports/openfaas-sqs-connector)
 
 An OpenFaaS connector for AWS SQS.
 
@@ -16,7 +16,7 @@ An OpenFaaS connector for AWS SQS.
 To install `openfaas-sqs-connector` using Helm, run
 
 ```shell
-$ helm repo add openfaas-sqs-connector https://form3tech-oss.github.io/openfaas-sqs-connector
+$ helm repo add openfaas-sqs-connector https://Altitude-sports.github.io/openfaas-sqs-connector
 ```
 
 ```shell
@@ -30,23 +30,23 @@ $ helm upgrade --install openfaas-sqs-connector openfaas-sqs-connector/openfaas-
   --set region=<region>
 ```
 
-Please check [`values.yaml`](https://github.com/form3tech-oss/openfaas-sqs-connector/blob/master/helm/openfaas-sqs-connector/values.yaml) for details on how to tweak the installation. 
+Please check [`values.yaml`](https://github.com/Altitude-sports/openfaas-sqs-connector/blob/master/helm/openfaas-sqs-connector/values.yaml) for details on how to tweak the installation.
 
 ### `kubectl`
 
 To install `openfaas-sqs-connector` using `kubectl`, edit `./deploy/kubernetes/openfaas-sqs-connector-dep.yaml` as required in order to set appropriate values for each flag:
 
-Flag&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description | Default
----- | ----------- | -------
-`--endpoint` | The AWS SQS endpoint to use. Useful when using [`elasticmq`](https://github.com/softwaremill/elasticmq) for local development. | `""`
-`--log-level` | The log level to use. | `info`
-`--max-number-of-messages` | The maximum number of messages to return from the AWS SQS queue per iteration. | `1`
-`--max-wait-time` | The maximum amount of time (in seconds) to wait for messages to be returned from the AWS SQS queue per iteration. | `1`
-`--openfaas-gateway-url` | The URL at which the OpenFaaS gateway can be reached. | `http://gateway.openfaas.svc:8080`
-`--queue-url` | The name of the AWS SQS queue to pop messages from. | N/A
-`--region` | The AWS region to which the AWS SQS queue belongs. | N/A
-`--topic-refresh-interval` | The interval (in seconds) at which to rebuild the topic map. | `15`
-`--visibility-timeout` | The amount of time (in seconds) during which received messages are unavailable to other consumers. | `30`
+| Flag&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description                                                                                                                    | Default                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| `--endpoint`                                                                                                                                                                                                                                                                       | The AWS SQS endpoint to use. Useful when using [`elasticmq`](https://github.com/softwaremill/elasticmq) for local development. | `""`                               |
+| `--log-level`                                                                                                                                                                                                                                                                      | The log level to use.                                                                                                          | `info`                             |
+| `--max-number-of-messages`                                                                                                                                                                                                                                                         | The maximum number of messages to return from the AWS SQS queue per iteration.                                                 | `1`                                |
+| `--max-wait-time`                                                                                                                                                                                                                                                                  | The maximum amount of time (in seconds) to wait for messages to be returned from the AWS SQS queue per iteration.              | `1`                                |
+| `--openfaas-gateway-url`                                                                                                                                                                                                                                                           | The URL at which the OpenFaaS gateway can be reached.                                                                          | `http://gateway.openfaas.svc:8080` |
+| `--queue-url`                                                                                                                                                                                                                                                                      | The name of the AWS SQS queue to pop messages from.                                                                            | N/A                                |
+| `--region`                                                                                                                                                                                                                                                                         | The AWS region to which the AWS SQS queue belongs.                                                                             | N/A                                |
+| `--topic-refresh-interval`                                                                                                                                                                                                                                                         | The interval (in seconds) at which to rebuild the topic map.                                                                   | `15`                               |
+| `--visibility-timeout`                                                                                                                                                                                                                                                             | The amount of time (in seconds) during which received messages are unavailable to other consumers.                             | `30`                               |
 
 Then, run
 

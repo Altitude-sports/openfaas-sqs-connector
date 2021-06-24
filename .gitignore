@@ -1,2 +1,5 @@
-.idea/
-vendor/
+# Private files
+.openfaas
+
+# Build files
+bin
