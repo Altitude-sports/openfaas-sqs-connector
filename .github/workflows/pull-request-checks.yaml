@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: Altitude-sports/${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-image:
@@ -24,6 +24,8 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
