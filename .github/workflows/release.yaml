@@ -10,6 +10,7 @@ env:
   IMAGE_NAME: Altitude-sports/${{ github.repository }}
 
 jobs:
+
   build-and-push-image:
     runs-on: ubuntu-latest
     permissions:
@@ -35,7 +36,6 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
-          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
