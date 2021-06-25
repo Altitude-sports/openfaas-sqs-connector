@@ -49,25 +49,35 @@ Queue CLI args
 */}}
 {{- define "openfaas-sqs-connector.queue-args" -}}
 
+{{ $result := list }}
+
 {{- if .url -}}
+  {{- $result = append $result "--queue-url" -}}
+  {{- $result = append $result (.url | quote) -}}
+
 {{- else if .name }}
-    {{- if .awsAccountId -}}
-    {{- end -}}
+  {{- $result = append $result "--queue-name" -}}
+  {{- $result = append $result (.name | quote) -}}
+
+  {{- if .awsAccountId -}}
+    {{- $result = append $result "--aws-account-id" -}}
+    {{- $result = append $result (.awsAccountId | quote) -}}
+  {{- end -}}
+
 {{- else -}}
-{{ fail "Please provide either a queue name or URL" . }}
+  {{ fail "Please provide either a queue name or URL" . }}
 {{- end -}}
 
-{{- end -}}
 
-{{/*
-Common labels
-*/}}
-{{- define "openfaas-sqs-connector.labels" -}}
-app.kubernetes.io/name: {{ include "openfaas-sqs-connector.name" . }}
-helm.sh/chart: {{ include "openfaas-sqs-connector.chart" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- $result = append $result "--max-number-of-messages" -}}
+{{- $result = append $result (.maxNumberOfMessages | default 1 | quote) -}}
+{{- $result = append $result "--max-wait-time" -}}
+{{- $result = append $result (.maxWaitTime | default 1 | quote) -}}
+{{- $result = append $result "--visibility-timeout" -}}
+{{- $result = append $result (.visibilityTimeout | default 30 | quote) -}}
+
+{{- range $result }}
+- {{ . }}
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+
 {{- end -}}

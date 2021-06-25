@@ -1,69 +1,59 @@
 ---
+
+{{- range .Values.sqsQueues -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-{{ include "openfaas-sqs-connector.labels" . | indent 4 }}
-  name: {{ include "openfaas-sqs-connector.fullname" . }}
-  namespace: {{ .Release.Namespace | quote }}
+{{ include "openfaas-sqs-connector.labels" $ | indent 4 }}
+  name: {{ include "openfaas-sqs-connector.fullname" $ }}
+  namespace: {{ $.Release.Namespace }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "openfaas-sqs-connector.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ include "openfaas-sqs-connector.name" $ }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "openfaas-sqs-connector.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/name: {{ include "openfaas-sqs-connector.name" $ }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
     spec:
       containers:
-      - name: {{ .Chart.Name }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+      - name: {{ $.Chart.Name }}
+        image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
         args:
-        - --endpoint
-        - "{{ .Values.endpoint }}"
-        - --log-level
-        - "{{ .Values.logLevel }}"
-        - --max-number-of-messages
-        - "{{ .Values.maxNumberOfMessages }}"
-        - --max-wait-time
-        - "{{ .Values.maxWaitTime }}"
-        - --openfaas-gateway-url
-        - "{{ .Values.openfaasGatewayUrl }}"
-        - --queue-url
-        - "{{ required ".Values.queueUrl is required!" .Values.queueUrl }}"
-        - --region
-        - "{{ required ".Values.region is required!" .Values.region }}"
-        - --topic-refresh-interval
-        - "{{ .Values.topicRefreshInterval }}"
-        - --visibility-timeout
-        - "{{ .Values.visibilityTimeout }}"
+          - --log-level
+          - "{{ $.Values.logLevel }}"
+          - --openfaas-gateway-url
+          - "{{ $.Values.openfaas.gateway.url }}"
+          {{- include "openfaas-sqs-connector.queue-args" . | indent 10 }}
         env:
-        - name: basic_auth
-          value: "true"
-        - name: secret_mount_path
-          value: /secret
-        resources:
-          {{- toYaml .Values.resources | nindent 12 }}
+          - name: basic_auth
+            value: "true"
+          - name: secret_mount_path
+            value: /secret
+        resources: {{ toYaml $.Values.resources | nindent 10 }}
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-            - ALL
+              - ALL
           readOnlyRootFilesystem: true
           runAsGroup: 65534
           runAsNonRoot: true
           runAsUser: 65534
         volumeMounts:
-        - name: basic-auth
-          readOnly: true
-          mountPath: /secret
+          - name: basic-auth
+            readOnly: true
+            mountPath: /secret
       securityContext:
         fsGroup: 65534
-      serviceAccountName: {{ include "openfaas-sqs-connector.fullname" . }}
+      serviceAccountName: {{ $.Values.serviceAccount.name | default (include "openfaas-sqs-connector.fullname" $) }}
       volumes:
-      - name: basic-auth
-        secret:
-          secretName: basic-auth
+        - name: basic-auth
+          secret:
+            secretName: openfaas-basic-auth
+---
+{{- end -}}

@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openfaas-basic-auth
+  namespace: {{ $.Release.Namespace }}
+  labels:
+{{ include "openfaas-sqs-connector.labels" $ | indent 4 }}
+type: Opaque
+data:
+  basic-auth-user: {{ .Values.openfaas.gateway.basicauth.user | b64enc }}
+  basic-auth-password: {{ .Values.openfaas.gateway.basicauth.password | b64enc }}
