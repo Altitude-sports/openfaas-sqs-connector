@@ -1,4 +1,4 @@
-name: Build project and run unit tests
+name: Release
 
 on:
   push:
@@ -118,4 +118,4 @@ jobs:
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
-          charts_dir: helm/openfaas-sqs-connector
+          charts_dir: helm
