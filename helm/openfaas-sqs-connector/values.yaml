@@ -5,31 +5,48 @@ sqsQueues:
     # `name` is not empty, otherwise this parameter takes precedence against any
     # other parameter that refers to an SQS queue.
     url: 'https://sqs.us-east-1.amazonaws.com/1234567890/queue-name'
+
     # `name` specified the name of an SQS queue. If the `awsAccountId` parameter
     # is left empty, the library will obtain the queue URL using the AWS account
     # ID of the authenticated account. This parameter is optional, since it's
     # ignored when `url` is not empty.
     name: ''
+
     # `awsAccountId` can point to an AWS account different than the
     # authenticated one. This parameter is ignored when `name` is ignored.
     awsAccountId: ''
+
+    # As defined in the AWS SQS API docs: https://amzn.to/3xPYogK
+    maxNumberOfMessages: 1
+    maxWaitTime: 1
+    visibilityTimeout: 30
+
+    # The amount of Pod replicas to have listening to messages in this queue
+    replicaCount: 1
+
     # For future use cases. Currently ignored, since the FIFO property can be
     # inferred from the queue name: if the name ends in `.fifo` then it's a FIFO
     # queue.
     isFifo: false
 
 image:
-  repository: ghcr.io/openfaas-sqs-connector
-  tag: 1.1.0
+  repository: ghcr.io/Altitude-sports/openfaas-sqs-connector
+  tag: latest
 
 logLevel: warn
 
-maxNumberOfMessages: 1
-maxWaitTime: 1
-visibilityTimeout: 30
+serviceAccount:
+  name: openfaas-sqs-connector
+  create: true
+  annotations: {}
 
-openfaasGatewayUrl: http://gateway.openfaas.svc:8080
-replicaCount: 1
+openfaas:
+  gateway:
+    url: http://gateway.openfaas.svc:8080
+    basicauth:
+      user: admin
+      password: '123'
+
 topicRefreshInterval: 15
 
 resources: {}
