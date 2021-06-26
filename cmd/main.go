@@ -65,6 +65,11 @@ func main() {
 		"",
 		"the AWS account ID that owns the AWS SQS queue to pop messages from",
 	)
+	region := flag.String(
+		"region",
+		"",
+		"the AWS region where the SQS queue is located",
+	)
 	topicRefreshInterval := flag.Int(
 		"topic-refresh-interval",
 		15,
@@ -93,10 +98,16 @@ func main() {
 	}
 
 	// Initialize the AWS SQS client.
-	awsConfig, err := config.LoadDefaultConfig(context.TODO())
+	extraOpts := []func(*config.LoadOptions) error{}
+	if *region != "" {
+		extraOpts = append(extraOpts, config.WithRegion(*region))
+	}
+
+	awsConfig, err := config.LoadDefaultConfig(context.TODO(), extraOpts...)
 	if err != nil {
 		log.Fatalf("could not initialize the AWS SDK: %v\n", err)
 	}
+
 	sqsClient := sqs.NewFromConfig(awsConfig)
 
 	// Retrieve the AWS SQS queue URL if not explicitly set
