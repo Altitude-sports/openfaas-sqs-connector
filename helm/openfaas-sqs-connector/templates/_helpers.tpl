@@ -53,31 +53,35 @@ Queue CLI args
 
 {{- if .url -}}
   {{- $result = append $result "--queue-url" -}}
-  {{- $result = append $result (.url | quote) -}}
+  {{- $result = append $result .url -}}
 
 {{- else if .name }}
   {{- $result = append $result "--queue-name" -}}
-  {{- $result = append $result (.name | quote) -}}
+  {{- $result = append $result .name -}}
 
   {{- if .awsAccountId -}}
     {{- $result = append $result "--aws-account-id" -}}
-    {{- $result = append $result (.awsAccountId | quote) -}}
+    {{- $result = append $result .awsAccountId -}}
   {{- end -}}
 
 {{- else -}}
   {{ fail "Please provide either a queue name or URL" . }}
 {{- end -}}
 
+{{- if .region -}}
+  {{- $result = append $result "--region" -}}
+  {{- $result = append $result .region -}}
+{{- end -}}
 
 {{- $result = append $result "--max-number-of-messages" -}}
-{{- $result = append $result (.maxNumberOfMessages | default 1 | quote) -}}
+{{- $result = append $result (.maxNumberOfMessages | default 1) -}}
 {{- $result = append $result "--max-wait-time" -}}
-{{- $result = append $result (.maxWaitTime | default 1 | quote) -}}
+{{- $result = append $result (.maxWaitTime | default 1 ) -}}
 {{- $result = append $result "--visibility-timeout" -}}
-{{- $result = append $result (.visibilityTimeout | default 30 | quote) -}}
+{{- $result = append $result (.visibilityTimeout | default 30 ) -}}
 
 {{- range $result }}
-- {{ . }}
+- {{ . | quote }}
 {{- end }}
 
 {{- end -}}

@@ -4,7 +4,7 @@ sqsQueues:
   - # `url` specifies the URL of an SQS queue. This parameter is optional if
     # `name` is not empty, otherwise this parameter takes precedence against any
     # other parameter that refers to an SQS queue.
-    url: 'https://sqs.us-east-1.amazonaws.com/1234567890/queue-name'
+    url: ''
 
     # `name` specified the name of an SQS queue. If the `awsAccountId` parameter
     # is left empty, the library will obtain the queue URL using the AWS account
@@ -15,6 +15,11 @@ sqsQueues:
     # `awsAccountId` can point to an AWS account different than the
     # authenticated one. This parameter is ignored when `name` is ignored.
     awsAccountId: ''
+
+    # `region` is an optional parameter that can be specified when the region
+    # set up in the underlying environment is different from the region where
+    # the SQS queue is located.
+    region: ''
 
     # As defined in the AWS SQS API docs: https://amzn.to/3xPYogK
     maxNumberOfMessages: 1
@@ -30,7 +35,7 @@ sqsQueues:
     isFifo: false
 
 image:
-  repository: ghcr.io/Altitude-sports/openfaas-sqs-connector
+  repository: ghcr.io/altitude-sports/openfaas-sqs-connector
   tag: latest
 
 logLevel: warn
