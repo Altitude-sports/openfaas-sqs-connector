@@ -38,7 +38,9 @@ If release name contains chart name it will be used as a full name.
 {{- $name = regexSplit "/" .url -1 | last -}}
 {{- end -}}
 
-{{-/* TODO: make this prefix customizable based on the release name or name overrides */-}}
+{{/*
+TODO: make this prefix customizable based on the release name or name overrides
+*/}}
 {{- $prefix := "openfaas-sqs-connector" -}}
 
 {{- printf "%s-%s" $prefix $name | trunc 63 | trimSuffix "-" -}}
