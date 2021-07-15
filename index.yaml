@@ -2,6 +2,18 @@ apiVersion: v1
 entries:
   openfaas-sqs-connector:
   - apiVersion: v2
+    appVersion: 2.2.1
+    created: "2021-07-15T20:23:56.845984909Z"
+    description: An OpenFaaS connector for AWS SQS
+    digest: 22b74aaf000614ec081ffb4600ee1c311659600d5b5d797f821a1b2268e5f3a9
+    home: https://github.com/Altitude-sports/openfaas-sqs-connector
+    name: openfaas-sqs-connector
+    sources:
+    - https://github.com/Altitude-sports/openfaas-sqs-connector
+    urls:
+    - https://github.com/Altitude-sports/openfaas-sqs-connector/releases/download/openfaas-sqs-connector-2.2.1/openfaas-sqs-connector-2.2.1.tgz
+    version: 2.2.1
+  - apiVersion: v2
     appVersion: 2.2.0
     created: "2021-07-15T20:11:03.535406668Z"
     description: An OpenFaaS connector for AWS SQS
@@ -37,4 +49,4 @@ entries:
     urls:
     - https://github.com/Altitude-sports/openfaas-sqs-connector/releases/download/openfaas-sqs-connector-2.0.0/openfaas-sqs-connector-2.0.0.tgz
     version: 2.0.0
-generated: "2021-07-15T20:11:03.535418669Z"
+generated: "2021-07-15T20:23:56.846110211Z"
