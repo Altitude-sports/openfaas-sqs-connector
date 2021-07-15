@@ -6,7 +6,7 @@ kind: Deployment
 metadata:
   labels:
 {{ include "openfaas-sqs-connector.labels" $ | indent 4 }}
-  name: {{ include "openfaas-sqs-connector.fullname" $ }}
+  name: {{ include "openfaas-sqs-connector.deployment-name" . }}
   namespace: {{ $.Release.Namespace }}
 spec:
   replicas: {{ .replicaCount }}

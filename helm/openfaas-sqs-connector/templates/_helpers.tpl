@@ -3,7 +3,7 @@
 Expand the name of the chart.
 */}}
 {{- define "openfaas-sqs-connector.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- .Chart.Name | default .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
@@ -22,6 +22,27 @@ If release name contains chart name it will be used as a full name.
 {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
+{{- end -}}
+
+{{/*
+Create a deployment name that's specific to the queue that it monitors.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "openfaas-sqs-connector.deployment-name" -}}
+
+{{- $name := "" -}}
+{{- if .name -}}
+{{- $name = .name -}}
+{{- else if .url -}}
+{{- $name = regexSplit "/" .url -1 | last -}}
+{{- end -}}
+
+{{-/* TODO: make this prefix customizable based on the release name or name overrides */-}}
+{{- $prefix := "openfaas-sqs-connector" -}}
+
+{{- printf "%s-%s" $prefix $name | trunc 63 | trimSuffix "-" -}}
+
 {{- end -}}
 
 {{/*
@@ -76,9 +97,9 @@ Queue CLI args
 {{- $result = append $result "--max-number-of-messages" -}}
 {{- $result = append $result (.maxNumberOfMessages | default 1) -}}
 {{- $result = append $result "--max-wait-time" -}}
-{{- $result = append $result (.maxWaitTime | default 1 ) -}}
+{{- $result = append $result (.maxWaitTime | default 1) -}}
 {{- $result = append $result "--visibility-timeout" -}}
-{{- $result = append $result (.visibilityTimeout | default 30 ) -}}
+{{- $result = append $result (.visibilityTimeout | default 30) -}}
 
 {{- range $result }}
 - {{ . | quote }}
