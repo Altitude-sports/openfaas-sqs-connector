@@ -18,9 +18,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/Altitude-sports/connector-sdk/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/openfaas/connector-sdk/types"
 )
 
 // ResponseProcessor processes responses to functions invocations made while processing messages off of an AWS SQS queue.
@@ -41,7 +41,7 @@ func NewResponseProcessor(sqsClient *sqs.Client, sqsQueueURL string) *ResponsePr
 // received.
 func (r *ResponseProcessor) Response(res types.InvokerResponse) {
 	// Handle processing of the response in a separate goroutine.
-	// https://github.com/openfaas/connector-sdk/blob/0.4.2/types/response_subscriber.go#L5-L7
+	// https://github.com/Altitude-sports/connector-sdk/blob/0.4.2/types/response_subscriber.go#L5-L7
 	go func() {
 		logger, _, receiptHandle := unpackMessageContext(res.Context)
 

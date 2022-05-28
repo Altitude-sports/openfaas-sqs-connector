@@ -18,10 +18,10 @@ import (
 	"context"
 	"sync"
 
+	"github.com/Altitude-sports/connector-sdk/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	sqsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
-	"github.com/openfaas/connector-sdk/types"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Altitude-sports/openfaas-sqs-connector/internal/pointers"

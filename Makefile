@@ -28,7 +28,7 @@ update-libs: env-setup
 	@go get -u github.com/aws/aws-sdk-go-v2
 	@go get -u github.com/aws/aws-sdk-go-v2/config
 	@go get -u github.com/aws/aws-sdk-go-v2/service/sqs
-	@go get -u github.com/openfaas/connector-sdk
+	@go get -u github.com/Altitude-sports/connector-sdk
 	@go get -u github.com/sirupsen/logrus
 	@make tidy
 
