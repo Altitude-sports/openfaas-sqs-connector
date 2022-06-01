@@ -19,10 +19,10 @@ import (
 	"flag"
 	"time"
 
+	"github.com/Altitude-sports/connector-sdk/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/openfaas/connector-sdk/types"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Altitude-sports/openfaas-sqs-connector/internal/processors"
@@ -79,6 +79,11 @@ func main() {
 		"visibility-timeout",
 		30,
 		"the amount of time (in seconds) during which received messages are unavailable to other consumers",
+	)
+	namespace := flag.String(
+		"namespace",
+		"",
+		"the function namespace where it needs to be invoked",
 	)
 	flag.Parse()
 
@@ -137,6 +142,7 @@ func main() {
 			PrintResponseBody: log.IsLevelEnabled(log.DebugLevel),
 			PrintSync:         log.IsLevelEnabled(log.DebugLevel),
 			RebuildInterval:   time.Duration(*topicRefreshInterval) * time.Second,
+			Namespace:         *namespace,
 		},
 	)
 	controller.BeginMapBuilder()

@@ -1,3 +1,5 @@
+github.com/Altitude-sports/connector-sdk v0.0.0-20220528104509-4aba1b4eac46 h1:co/k9qampezvDPN3Ig551zbDUtklJjztV8/02Tv5AxU=
+github.com/Altitude-sports/connector-sdk v0.0.0-20220528104509-4aba1b4eac46/go.mod h1:iEtaAaBe0/gqYpxPASYu458TFnSyeY1LOy/pu+4QGsc=
 github.com/aws/aws-sdk-go-v2 v1.6.0 h1:r20hdhm8wZmKkClREfacXrKfX0Y7/s0aOoeraFbf/sY=
 github.com/aws/aws-sdk-go-v2 v1.6.0/go.mod h1:tI4KhsR5VkzlUa2DZAdwx7wCAYGwkZZ1H31PYrBFx1w=
 github.com/aws/aws-sdk-go-v2/config v1.3.0 h1:0JAnp0WcsgKilFLiZEScUTKIvTKa2LkicadZADza+u0=
@@ -33,8 +35,6 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
-github.com/openfaas/connector-sdk v0.0.0-20201220114541-89f0ffcc5448 h1:gHh56/nHvUPTcFyXszTOrPJePCg2Q3JKln11G1IU3PU=
-github.com/openfaas/connector-sdk v0.0.0-20201220114541-89f0ffcc5448/go.mod h1:hxiCgJmfEWQj17jwnr8yj1qbxQAqRPcudKU53lIu/QI=
 github.com/openfaas/faas-provider v0.16.1 h1:lJEHU7KpX9q1tpoaghmr4ao7WXi2wfofoaxa9JhNBaE=
 github.com/openfaas/faas-provider v0.16.1/go.mod h1:fq1JL0mX4rNvVVvRLaLRJ3H6o667sHuyP5p/7SZEe98=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

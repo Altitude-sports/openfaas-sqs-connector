@@ -28,6 +28,8 @@ spec:
           - "{{ $.Values.logLevel }}"
           - --openfaas-gateway-url
           - "{{ $.Values.openfaas.gateway.url }}"
+          - --namespace
+          - "{{ $.Release.Namespace }}"
           {{- include "openfaas-sqs-connector.queue-args" . | indent 10 }}
         env:
           - name: basic_auth
